@@ -9,7 +9,7 @@ Endpoints:
 
 import time
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 from src.guardrails import validate_input, validate_output
 
@@ -92,6 +92,13 @@ def chat():
             "latency_ms": latency_ms,
         }
     ), 200
+
+
+@app.route("/docs/<path:filename>")
+def serve_doc(filename):
+    """Serve policy documents (PDFs) for source preview."""
+    from src.config import DOCS_DIR
+    return send_from_directory(str(DOCS_DIR), filename)
 
 
 @app.route("/health")

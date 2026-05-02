@@ -116,51 +116,25 @@ function addTypingIndicator() {
 }
 
 function createSourcesHtml(sources) {
-    let html = '<div class="sources-section"><details><summary>📚 Sources (' + sources.length + ')</summary>';
+    let html = '<div class="sources-section"><div class="sources-chips">';
     for (const src of sources) {
-        html += `
-            <div class="source-item">
-                <div class="doc-id">${escapeHtml(src.doc_id || src.file || 'Unknown')}</div>
-                <div class="snippet">${escapeHtml(src.snippet || '')}</div>
-            </div>
-        `;
+        const docId = src.doc_id || src.file || 'Unknown';
+        const file = src.file || (docId + '.pdf');
+        const label = docId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        html += `<a class="source-chip" href="/docs/${encodeURIComponent(file)}" target="_blank" title="${escapeHtml(src.snippet || '')}">📄 ${escapeHtml(label)}</a>`;
     }
-    html += '</details></div>';
+    html += '</div></div>';
     return html;
 }
 
 function formatAnswer(text) {
     if (!text) return '<p>No response received.</p>';
-
-    // Convert markdown-style formatting
-    let html = text
-        // Bold
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        // Italic
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        // Inline code
-        .replace(/`(.*?)`/g, '<code>$1</code>')
-        // Citation brackets — make them stand out
-        .replace(/\[([\w\-]+(?:-[\w\-]+)*)\]/g, '<strong class="doc-id">[$1]</strong>')
-        // Line breaks to paragraphs
-        .split('\n\n').map(p => p.trim()).filter(p => p).map(p => {
-            // Check if this is a list
-            if (p.match(/^[\-\*]\s/m)) {
-                const items = p.split('\n').map(line =>
-                    line.replace(/^[\-\*]\s+/, '')
-                ).filter(l => l);
-                return '<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
-            }
-            if (p.match(/^\d+\.\s/m)) {
-                const items = p.split('\n').map(line =>
-                    line.replace(/^\d+\.\s+/, '')
-                ).filter(l => l);
-                return '<ol>' + items.map(i => `<li>${i}</li>`).join('') + '</ol>';
-            }
-            return `<p>${p.replace(/\n/g, '<br>')}</p>`;
-        }).join('');
-
-    return html;
+    // Use marked.js for full markdown rendering (tables, headers, lists, bold, etc.)
+    if (typeof marked !== 'undefined') {
+        return marked.parse(text);
+    }
+    // Fallback: basic paragraph rendering
+    return '<p>' + escapeHtml(text).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
 }
 
 function escapeHtml(text) {
