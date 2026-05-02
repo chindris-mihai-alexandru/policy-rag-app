@@ -26,9 +26,10 @@ This project was built with extensive AI assistance, as encouraged by the projec
 **Role**: Confirming technology decisions and finding open-source policy document references.
 
 **Specific uses**:
-- Verified Groq free tier availability and rate limits for llama-3.3-70b-versatile
+- Verified Groq and OpenRouter free tier availability and rate limits
 - Found open-source HR policy templates on GitHub (OpenGov Foundation, Center for Open Science) as structural references for the synthetic corpus
-- Confirmed current LangChain, ChromaDB, and sentence-transformers API compatibility
+- Confirmed current LangChain, ChromaDB v0.6.x, and FastEmbed API compatibility
+- Researched DigitalOcean App Platform buildpack behavior and Python runtime version support during Render → DO migration
 
 ### 3. Claude / GPT Models — Referenced for Model Selection
 

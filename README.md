@@ -4,23 +4,23 @@ A production-quality Retrieval-Augmented Generation (RAG) application that answe
 
 ## 🎯 Features
 
-- **RAG Pipeline**: LangChain + ChromaDB + Groq LLM for accurate, cited answers
-- **10 Policy Documents**: Comprehensive synthetic corpus covering PTO, remote work, expenses, security, benefits, holidays, and more
-- **Citation System**: Every answer includes source document references and snippets
+- **RAG Pipeline**: LangChain + ChromaDB + OpenRouter LLM for accurate, cited answers
+- **11 Policy Documents**: Corpus of 10 synthetic Acme Corp policies + 1 real public handbook (~111 pages total)
+- **Citation System**: Every answer includes source document references with clickable links to the source PDFs
 - **Guardrails**: Refuses off-topic questions, validates input/output, enforces citation requirements
-- **Web Chat UI**: Clean, responsive chat interface with real-time responses
-- **REST API**: `/chat` endpoint for programmatic access
-- **Evaluation Suite**: 25 questions with automated groundedness and citation accuracy metrics
-- **CI/CD**: GitHub Actions for testing and deployment
-- **Deployment**: Render free tier with keep-warm scheduler
+- **Web Chat UI**: Full-width responsive chat interface with real-time streaming (Server-Sent Events)
+- **REST API**: `/chat` endpoint (SSE streaming), `/health` and `/healthz` for status checks
+- **Evaluation Suite**: 25 questions with automated groundedness (100%) and citation accuracy (92%) metrics
+- **CI/CD**: GitHub Actions for testing; DigitalOcean App Platform auto-deploys on push to `main`
+- **Deployment**: DigitalOcean App Platform — live at https://sea-turtle-app-gnq2r.ondigitalocean.app
 
 ## 🏗️ Architecture
 
 ```
-User → Flask Web App → LangChain RAG Pipeline → Answer + Citations
-                            ├── ChromaDB (vector store, local)
-                            ├── HuggingFace Embeddings (all-MiniLM-L6-v2)
-                            └── Groq LLM (llama-3.3-70b-versatile)
+User → Flask Web App (SSE) → LangChain RAG Pipeline → Streamed Answer + Citations
+                                  ├── ChromaDB v0.6.3 (persistent vector store)
+                                  ├── FastEmbed BAAI/bge-small-en-v1.5 (local ONNX embeddings)
+                                  └── OpenRouter → gpt-oss-20b:free (LLM)
 ```
 
 ## 🚀 Quick Start
@@ -28,7 +28,7 @@ User → Flask Web App → LangChain RAG Pipeline → Answer + Citations
 ### Prerequisites
 
 - Python 3.12+
-- A free [Groq API key](https://console.groq.com)
+- A free [OpenRouter API key](https://openrouter.ai)
 
 ### Setup
 
@@ -46,13 +46,13 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env and add your GROQ_API_KEY
+# Edit .env and add your OPENROUTER_API_KEY
 
 # Ingest documents into ChromaDB
-python -c "from src.ingest import ingest_documents; print(ingest_documents(force=True))"
+python3 -c "from src.ingest import ingest_documents; print(ingest_documents(force=True))"
 
 # Run the app
-python -m src.app
+python3 -m src.app
 ```
 
 Visit [http://localhost:5000](http://localhost:5000) to use the chat interface.
@@ -106,8 +106,8 @@ python -m pytest tests/test_ingest.py -v       # Ingestion tests
 ## 📊 Evaluation
 
 ```bash
-# Run the evaluation suite (requires GROQ_API_KEY)
-python evaluation/run_evaluation.py
+# Run the evaluation suite (requires OPENROUTER_API_KEY)
+python3 evaluation/run_evaluation.py
 ```
 
 Results are saved to `evaluation/eval_results.json`.
@@ -116,13 +116,13 @@ Results are saved to `evaluation/eval_results.json`.
 
 | Component | Technology |
 |-----------|-----------|
-| LLM | Groq (llama-3.3-70b-versatile) |
-| Embeddings | HuggingFace (all-MiniLM-L6-v2) |
-| Vector Store | ChromaDB (persistent, local) |
+| LLM | OpenRouter `gpt-oss-20b:free` |
+| Embeddings | FastEmbed `BAAI/bge-small-en-v1.5` (local ONNX) |
+| Vector Store | ChromaDB v0.6.3 (persistent, local) |
 | Orchestration | LangChain |
-| Web Framework | Flask |
-| Deployment | Render (free tier) |
-| CI/CD | GitHub Actions |
+| Web Framework | Flask (SSE streaming) |
+| Deployment | DigitalOcean App Platform |
+| CI/CD | GitHub Actions + DO GitHub App |
 
 ## 📄 License
 
