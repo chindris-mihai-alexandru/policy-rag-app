@@ -44,8 +44,9 @@ def _get_chroma_client():
 def _compute_corpus_hash() -> str:
     """Compute a hash of all doc files to detect changes."""
     h = hashlib.sha256()
-    for fpath in sorted(Path(DOCS_DIR).glob("*.md")):
-        h.update(fpath.read_bytes())
+    for pattern in ("*.md", "*.pdf", "*.txt"):
+        for fpath in sorted(Path(DOCS_DIR).glob(pattern)):
+            h.update(fpath.read_bytes())
     return h.hexdigest()[:16]
 
 
@@ -73,7 +74,7 @@ def _load_and_chunk_documents():
 
     for fpath in sorted(Path(DOCS_DIR).glob("*.md")):
         content = fpath.read_text(encoding="utf-8")
-        doc_id = fpath.stem  # e.g., "pto-and-leave-policy"
+        doc_id = fpath.stem
 
         # First pass: split by markdown headers
         header_splits = md_splitter.split_text(content)
@@ -87,9 +88,26 @@ def _load_and_chunk_documents():
                     "file": fpath.name,
                     **doc.metadata,
                 }
-                all_chunks.append(
-                    {"text": chunk_text, "metadata": metadata}
-                )
+                all_chunks.append({"text": chunk_text, "metadata": metadata})
+
+    # Load PDF files
+    for fpath in sorted(Path(DOCS_DIR).glob("*.pdf")):
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(str(fpath))
+            full_text = "\n\n".join(
+                page.extract_text() or "" for page in reader.pages
+            )
+            doc_id = fpath.stem
+            sub_chunks = text_splitter.split_text(full_text)
+            for chunk_text in sub_chunks:
+                if chunk_text.strip():
+                    all_chunks.append({
+                        "text": chunk_text,
+                        "metadata": {"source": doc_id, "file": fpath.name},
+                    })
+        except Exception as e:
+            print(f"Warning: could not load {fpath.name}: {e}")
 
     return all_chunks
 
@@ -107,7 +125,7 @@ def ingest_documents(force: bool = False) -> dict:
     corpus_hash = _compute_corpus_hash()
 
     # Check if collection already exists and is current
-    existing_collections = [c.name for c in client.list_collections()]
+    existing_collections = client.list_collections()
     if CHROMA_COLLECTION in existing_collections and not force:
         collection = client.get_collection(CHROMA_COLLECTION)
         stored_meta = collection.metadata or {}
