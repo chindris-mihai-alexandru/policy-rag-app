@@ -11,25 +11,26 @@ def test_docs_directory_exists():
     assert Path(DOCS_DIR).is_dir()
 
 
-def test_docs_have_markdown_files():
-    """Test that docs/ contains markdown files."""
-    md_files = list(Path(DOCS_DIR).glob("*.md"))
-    assert len(md_files) >= 5, f"Expected at least 5 markdown files, found {len(md_files)}"
+def test_docs_have_pdf_files():
+    """Test that docs/ contains PDF files."""
+    pdf_files = list(Path(DOCS_DIR).glob("*.pdf"))
+    assert len(pdf_files) >= 5, f"Expected at least 5 PDF files, found {len(pdf_files)}"
 
 
 def test_all_expected_docs_present():
-    """Test that all 10 expected policy documents are present."""
+    """Test that all 10 synthetic Acme policy PDFs are present, plus the public handbook."""
     expected = [
-        "pto-and-leave-policy.md",
-        "remote-work-policy.md",
-        "expense-reimbursement-policy.md",
-        "information-security-policy.md",
-        "code-of-conduct.md",
-        "holiday-schedule.md",
-        "benefits-overview.md",
-        "onboarding-guide.md",
-        "performance-review-policy.md",
-        "acceptable-use-policy.md",
+        "pto-and-leave-policy.pdf",
+        "remote-work-policy.pdf",
+        "expense-reimbursement-policy.pdf",
+        "information-security-policy.pdf",
+        "code-of-conduct.pdf",
+        "holiday-schedule.pdf",
+        "benefits-overview.pdf",
+        "onboarding-guide.pdf",
+        "performance-review-policy.pdf",
+        "acceptable-use-policy.pdf",
+        "public_counsel_employee_handbook.pdf",
     ]
     for filename in expected:
         fpath = Path(DOCS_DIR) / filename
@@ -37,24 +38,28 @@ def test_all_expected_docs_present():
 
 
 def test_docs_are_not_empty():
-    """Test that all docs have content."""
-    for fpath in Path(DOCS_DIR).glob("*.md"):
-        content = fpath.read_text(encoding="utf-8")
-        assert len(content) > 100, f"Document {fpath.name} appears too short ({len(content)} chars)"
+    """Test that all PDFs have content (non-zero file size)."""
+    for fpath in Path(DOCS_DIR).glob("*.pdf"):
+        size = fpath.stat().st_size
+        assert size > 1000, f"PDF {fpath.name} appears too small ({size} bytes)"
 
 
-def test_docs_have_policy_id():
-    """Test that synthetic Acme policy documents have a Policy ID.
+def test_no_markdown_files_in_docs():
+    """Corpus should be PDF-only — no markdown files."""
+    md_files = list(Path(DOCS_DIR).glob("*.md"))
+    assert len(md_files) == 0, f"Found unexpected markdown files: {[f.name for f in md_files]}"
 
-    Real public corpus files (basecamp_*, beach_haven_*, etc.) are exempt
-    as they are third-party documents not authored by this project.
-    """
-    for fpath in Path(DOCS_DIR).glob("*.md"):
-        # Skip real public corpus files — they don't follow Acme's Policy ID format
-        if fpath.name.startswith(("basecamp_", "beach_haven_", "jian_", "public_counsel_", "shrm_", "wednesday_", "din_co_", "madetech_", "ever_co_")):
-            continue
-        content = fpath.read_text(encoding="utf-8")
-        assert "Policy ID:" in content, f"Document {fpath.name} missing Policy ID"
+
+def test_corpus_page_count_in_range():
+    """Total corpus should be between 30 and 120 pages per rubric guidelines."""
+    from pypdf import PdfReader
+    total = 0
+    for fpath in sorted(Path(DOCS_DIR).glob("*.pdf")):
+        try:
+            total += len(PdfReader(str(fpath)).pages)
+        except Exception:
+            pass
+    assert 30 <= total <= 120, f"Corpus page count {total} outside allowed range 30-120"
 
 
 def test_load_and_chunk():
@@ -64,7 +69,6 @@ def test_load_and_chunk():
     chunks = _load_and_chunk_documents()
     assert len(chunks) > 50, f"Expected >50 chunks, got {len(chunks)}"
 
-    # Check chunk structure
     for chunk in chunks[:5]:
         assert "text" in chunk
         assert "metadata" in chunk

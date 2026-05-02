@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.rag_chain import ask
-from src.config import GROQ_API_KEY, GROQ_MODEL
+from src.config import OPENROUTER_API_KEY, OPENROUTER_MODEL
 
 
 def load_eval_questions() -> list[dict]:
@@ -28,11 +28,23 @@ def load_eval_questions() -> list[dict]:
 
 
 def check_citation_accuracy(answer: str, expected_source: str) -> bool:
-    """Check if the expected source document is cited in the answer."""
-    # Look for [source-name] pattern in the answer
-    cited_sources = re.findall(r"\[([\w\-]+(?:-[\w\-]+)*)\]", answer)
-    # Check if expected source is among cited sources
-    return expected_source in cited_sources
+    """Check if the expected source document is cited in the answer.
+
+    Handles multiple citation formats produced by the LLM:
+      - [pto-and-leave-policy]
+      - [Source 2: pto-and-leave-policy]
+      - Non-breaking hyphens (U+2011) used by some models
+    """
+    # Normalise non-breaking hyphens and similar unicode dashes to ASCII hyphen
+    normalised = answer.replace("\u2011", "-").replace("\u2013", "-").replace("\u2014", "-")
+    # Extract everything inside square brackets
+    bracketed = re.findall(r"\[([^\]]+)\]", normalised)
+    for item in bracketed:
+        # Strip "Source N: " prefix if present
+        item_clean = re.sub(r"^Source\s+\d+:\s*", "", item, flags=re.IGNORECASE).strip()
+        if item_clean == expected_source:
+            return True
+    return False
 
 
 def check_groundedness_with_llm(question: str, answer: str, context_chunks: list[dict]) -> bool:
@@ -40,7 +52,7 @@ def check_groundedness_with_llm(question: str, answer: str, context_chunks: list
 
     Returns True if the answer is fully supported by the context.
     """
-    from langchain_groq import ChatGroq
+    from langchain_openai import ChatOpenAI
     from langchain_core.prompts import ChatPromptTemplate
 
     context_text = "\n\n".join([c["text"] for c in context_chunks])
@@ -66,11 +78,16 @@ def check_groundedness_with_llm(question: str, answer: str, context_chunks: list
         )),
     ])
 
-    llm = ChatGroq(
-        api_key=GROQ_API_KEY,
-        model_name=GROQ_MODEL,
+    llm = ChatOpenAI(
+        api_key=OPENROUTER_API_KEY,
+        base_url="https://openrouter.ai/api/v1",
+        model=OPENROUTER_MODEL,
         temperature=0.0,
         max_tokens=10,
+        default_headers={
+            "HTTP-Referer": "https://github.com/chindris-mihai-alexandru/policy-rag-app",
+            "X-Title": "Acme Corp Policy RAG",
+        },
     )
 
     chain = judge_prompt | llm
@@ -90,7 +107,7 @@ def run_evaluation():
     latencies = []
 
     print(f"Running evaluation on {len(questions)} questions...")
-    print(f"Using model: {GROQ_MODEL}")
+    print(f"Using model: {OPENROUTER_MODEL}")
     print("-" * 60)
 
     for i, q in enumerate(questions, 1):

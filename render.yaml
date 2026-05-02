@@ -2,11 +2,11 @@ services:
   - type: web
     name: policy-rag-app
     runtime: python
-    buildCommand: pip install -r requirements.txt && python -c "from src.ingest import ingest_documents; ingest_documents()"
-    startCommand: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 30 --workers 1 --threads 2
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 30 --workers 1 --threads 2 --preload
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.9"
-      - key: GROQ_API_KEY
-        fromSecret: GROQ_API_KEY
+      - key: OPENROUTER_API_KEY
+        fromSecret: OPENROUTER_API_KEY
     plan: free

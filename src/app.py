@@ -4,6 +4,7 @@ Endpoints:
     GET  /       — Chat UI
     POST /chat   — API endpoint for questions
     GET  /health — Health check
+    GET  /healthz — Health check (Render alias)
 """
 
 import time
@@ -11,12 +12,19 @@ import time
 from flask import Flask, jsonify, render_template, request
 
 from src.guardrails import validate_input, validate_output
+from src.ingest import ingest_documents
+from src.rag_chain import warm_up
 
 app = Flask(
     __name__,
     template_folder="../templates",
     static_folder="../static",
 )
+
+# Eager initialisation: ingest corpus and warm up models at worker boot.
+# This prevents first-request timeout on Render free tier.
+ingest_documents()
+warm_up()
 
 
 @app.route("/")
@@ -47,7 +55,6 @@ def chat():
     start = time.time()
     try:
         from src.rag_chain import ask
-
         result = ask(question)
     except Exception as e:
         return jsonify(
@@ -63,8 +70,6 @@ def chat():
         ), 200
 
     latency_ms = round((time.time() - start) * 1000)
-
-    # Validate and post-process the output
     answer = validate_output(result["answer"])
 
     return jsonify(

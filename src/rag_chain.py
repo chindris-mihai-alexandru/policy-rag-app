@@ -1,20 +1,21 @@
 """Acme Corp Policy RAG — Retrieval-Augmented Generation chain.
 
-Uses LangChain with ChromaDB retriever and Groq LLM to answer
+Uses LangChain with ChromaDB retriever and OpenRouter LLM to answer
 policy questions with citations.
 """
 
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.config import (
     CHROMA_COLLECTION,
     CHROMA_PERSIST_DIR,
     EMBEDDING_MODEL,
-    GROQ_API_KEY,
-    GROQ_MODEL,
+    OPENROUTER_API_KEY,
+    OPENROUTER_BASE_URL,
+    OPENROUTER_MODEL,
     MAX_OUTPUT_TOKENS,
     RETRIEVAL_K,
 )
@@ -55,46 +56,57 @@ Employee question: {question}
 Provide a helpful, accurate answer with citations to the source documents."""
 
 
+# Module-level singletons — loaded once at worker boot, not per-request
+_embeddings: HuggingFaceEmbeddings | None = None
+_llm: ChatOpenAI | None = None
+
+
 def _get_embeddings() -> HuggingFaceEmbeddings:
-    """Return the HuggingFace embedding model."""
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+    """Return the HuggingFace embedding model (singleton)."""
+    global _embeddings
+    if _embeddings is None:
+        _embeddings = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": True},
+        )
+    return _embeddings
 
 
-def _get_chroma_retriever():
-    """Return a ChromaDB-backed LangChain retriever."""
+def _get_llm() -> ChatOpenAI:
+    """Return the OpenRouter LLM instance (singleton)."""
+    global _llm
+    if _llm is None:
+        _llm = ChatOpenAI(
+            api_key=OPENROUTER_API_KEY,
+            base_url=OPENROUTER_BASE_URL,
+            model=OPENROUTER_MODEL,
+            temperature=0.1,
+            max_tokens=MAX_OUTPUT_TOKENS,
+            default_headers={
+                "HTTP-Referer": "https://github.com/chindris-mihai-alexandru/policy-rag-app",
+                "X-Title": "Acme Corp Policy RAG",
+            },
+        )
+    return _llm
+
+
+def _get_chroma_collection():
+    """Return a ChromaDB collection handle."""
     import chromadb
-
     client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
-    collection = client.get_collection(CHROMA_COLLECTION)
-    return collection
-
-
-def _get_llm() -> ChatGroq:
-    """Return the Groq LLM instance."""
-    return ChatGroq(
-        api_key=GROQ_API_KEY,
-        model_name=GROQ_MODEL,
-        temperature=0.1,
-        max_tokens=MAX_OUTPUT_TOKENS,
-    )
+    return client.get_collection(CHROMA_COLLECTION)
 
 
 def _retrieve_context(question: str, k: int = None) -> list[dict]:
-    """Retrieve relevant chunks from ChromaDB.
-
-    Returns list of dicts with 'text', 'source', and 'metadata'.
-    """
+    """Retrieve relevant chunks from ChromaDB."""
     if k is None:
         k = RETRIEVAL_K
 
     embeddings = _get_embeddings()
     query_embedding = embeddings.embed_query(question)
 
-    collection = _get_chroma_retriever()
+    collection = _get_chroma_collection()
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=k,
@@ -131,6 +143,12 @@ def _format_context(retrieved_chunks: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
+def warm_up():
+    """Pre-load the embedding model and LLM at startup to avoid first-request latency."""
+    _get_embeddings()
+    _get_llm()
+
+
 def ask(question: str) -> dict:
     """Answer a policy question using RAG.
 
@@ -140,7 +158,6 @@ def ask(question: str) -> dict:
     Returns:
         dict with 'answer', 'sources', and 'chunks' keys.
     """
-    # Retrieve relevant context
     retrieved = _retrieve_context(question)
 
     if not retrieved:
@@ -154,10 +171,8 @@ def ask(question: str) -> dict:
             "chunks": [],
         }
 
-    # Format context for the prompt
     context_str = _format_context(retrieved)
 
-    # Build the prompt
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", SYSTEM_PROMPT),
@@ -165,15 +180,12 @@ def ask(question: str) -> dict:
         ]
     )
 
-    # Get LLM response
     llm = _get_llm()
     chain = prompt | llm
     response = chain.invoke({"context": context_str, "question": question})
 
-    # Extract unique sources cited
     sources = list(dict.fromkeys(chunk["source"] for chunk in retrieved))
 
-    # Build source snippets for the response
     source_snippets = []
     seen_sources = set()
     for chunk in retrieved:
