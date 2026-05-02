@@ -44,8 +44,15 @@ def test_docs_are_not_empty():
 
 
 def test_docs_have_policy_id():
-    """Test that each document has a Policy ID."""
+    """Test that synthetic Acme policy documents have a Policy ID.
+
+    Real public corpus files (basecamp_*, beach_haven_*, etc.) are exempt
+    as they are third-party documents not authored by this project.
+    """
     for fpath in Path(DOCS_DIR).glob("*.md"):
+        # Skip real public corpus files — they don't follow Acme's Policy ID format
+        if fpath.name.startswith(("basecamp_", "beach_haven_", "jian_", "public_counsel_", "shrm_", "wednesday_", "din_co_", "madetech_", "ever_co_")):
+            continue
         content = fpath.read_text(encoding="utf-8")
         assert "Policy ID:" in content, f"Document {fpath.name} missing Policy ID"
 
