@@ -1,0 +1,177 @@
+[
+  {
+    "id": 1,
+    "domain": "pto",
+    "question": "How many PTO days do new employees receive per year?",
+    "expected_answer": "New employees (0-2 years tenure) receive 15 PTO days (120 hours) per year.",
+    "expected_source": "pto-and-leave-policy"
+  },
+  {
+    "id": 2,
+    "domain": "pto",
+    "question": "What is the PTO carryover limit?",
+    "expected_answer": "Employees may carry over a maximum of 5 unused PTO days (40 hours) into the following calendar year.",
+    "expected_source": "pto-and-leave-policy"
+  },
+  {
+    "id": 3,
+    "domain": "pto",
+    "question": "How much advance notice is required for a PTO request of 5 days?",
+    "expected_answer": "Requests for absences of 4 or more consecutive days require at least 15 business days' advance notice.",
+    "expected_source": "pto-and-leave-policy"
+  },
+  {
+    "id": 4,
+    "domain": "pto",
+    "question": "How many sick days do full-time employees get?",
+    "expected_answer": "Full-time employees receive 10 sick days (80 hours) per calendar year.",
+    "expected_source": "pto-and-leave-policy"
+  },
+  {
+    "id": 5,
+    "domain": "pto",
+    "question": "How long is the paid parental leave at Acme Corp?",
+    "expected_answer": "Acme Corp provides 12 weeks of paid parental leave at 100% of regular base salary.",
+    "expected_source": "pto-and-leave-policy"
+  },
+  {
+    "id": 6,
+    "domain": "security",
+    "question": "What is the minimum password length required at Acme Corp?",
+    "expected_answer": "All Acme Corp accounts must use passwords with a minimum length of 14 characters.",
+    "expected_source": "information-security-policy"
+  },
+  {
+    "id": 7,
+    "domain": "security",
+    "question": "Is SMS-based multi-factor authentication allowed?",
+    "expected_answer": "No, SMS-based MFA is not permitted due to SIM-swap vulnerabilities. Approved methods are hardware security keys and authenticator apps.",
+    "expected_source": "information-security-policy"
+  },
+  {
+    "id": 8,
+    "domain": "security",
+    "question": "How quickly must a lost or stolen device be reported?",
+    "expected_answer": "Lost or stolen devices must be reported immediately to IT Security. IT will initiate a remote wipe within 1 hour of notification.",
+    "expected_source": "information-security-policy"
+  },
+  {
+    "id": 9,
+    "domain": "security",
+    "question": "What encryption standard is required for restricted data?",
+    "expected_answer": "Restricted data must be encrypted at rest using AES-256 encryption and in transit using TLS 1.2 or higher.",
+    "expected_source": "information-security-policy"
+  },
+  {
+    "id": 10,
+    "domain": "expenses",
+    "question": "What is the per-meal reimbursement limit for dinner during domestic travel?",
+    "expected_answer": "The dinner reimbursement limit during domestic business travel is $50.",
+    "expected_source": "expense-reimbursement-policy"
+  },
+  {
+    "id": 11,
+    "domain": "expenses",
+    "question": "What is the maximum hotel rate for domestic travel?",
+    "expected_answer": "Hotel stays should not exceed $200 per night for domestic travel, excluding taxes and fees.",
+    "expected_source": "expense-reimbursement-policy"
+  },
+  {
+    "id": 12,
+    "domain": "expenses",
+    "question": "How long do I have to submit an expense report?",
+    "expected_answer": "Reimbursement requests must be submitted within 30 calendar days of incurring the expense. Expenses older than 60 days require VP-level approval.",
+    "expected_source": "expense-reimbursement-policy"
+  },
+  {
+    "id": 13,
+    "domain": "expenses",
+    "question": "What is the annual professional development budget per employee?",
+    "expected_answer": "Each employee receives a $2,000 annual professional development budget.",
+    "expected_source": "expense-reimbursement-policy"
+  },
+  {
+    "id": 14,
+    "domain": "remote_work",
+    "question": "What are the core hours for remote employees?",
+    "expected_answer": "All employees must be available during core hours: 10:00 AM to 3:00 PM in their designated time zone.",
+    "expected_source": "remote-work-policy"
+  },
+  {
+    "id": 15,
+    "domain": "remote_work",
+    "question": "What equipment does Acme Corp provide to remote workers?",
+    "expected_answer": "Acme Corp provides a laptop, external 27-inch monitor, keyboard, mouse, and headset with microphone.",
+    "expected_source": "remote-work-policy"
+  },
+  {
+    "id": 16,
+    "domain": "remote_work",
+    "question": "How much is the monthly internet stipend for remote employees?",
+    "expected_answer": "All remote and hybrid employees receive a monthly $75 internet and utilities stipend.",
+    "expected_source": "remote-work-policy"
+  },
+  {
+    "id": 17,
+    "domain": "remote_work",
+    "question": "Can I work from a co-working space and get reimbursed?",
+    "expected_answer": "Acme Corp does not reimburse co-working space membership fees. Exceptions may be made for employees where reliable home internet is unavailable, with manager and HR approval.",
+    "expected_source": "remote-work-policy"
+  },
+  {
+    "id": 18,
+    "domain": "holidays",
+    "question": "Is Juneteenth a company holiday at Acme Corp?",
+    "expected_answer": "Yes, Juneteenth (June 19) is one of the 12 official paid company holidays.",
+    "expected_source": "holiday-schedule"
+  },
+  {
+    "id": 19,
+    "domain": "holidays",
+    "question": "How many floating holidays do employees get?",
+    "expected_answer": "Full-time employees receive 2 floating holidays per calendar year. Part-time employees receive 1.",
+    "expected_source": "holiday-schedule"
+  },
+  {
+    "id": 20,
+    "domain": "holidays",
+    "question": "What happens during the year-end office closure?",
+    "expected_answer": "Acme Corp closes offices from December 26 through December 31. This is paid time off that does not count against PTO balances.",
+    "expected_source": "holiday-schedule"
+  },
+  {
+    "id": 21,
+    "domain": "holidays",
+    "question": "What is the holiday pay rate for essential personnel who work on holidays?",
+    "expected_answer": "Essential personnel receive 1.5x their regular hourly rate plus one compensatory day off to be used within 90 days.",
+    "expected_source": "holiday-schedule"
+  },
+  {
+    "id": 22,
+    "domain": "cross_domain",
+    "question": "What is the 401(k) company match at Acme Corp?",
+    "expected_answer": "Acme Corp matches 100% of the first 4% of the employee's salary contributed to the 401(k) plan.",
+    "expected_source": "benefits-overview"
+  },
+  {
+    "id": 23,
+    "domain": "cross_domain",
+    "question": "How long is the onboarding period before I can work remotely?",
+    "expected_answer": "New employees must complete their 90-day onboarding period on-site before becoming eligible for hybrid or remote work arrangements.",
+    "expected_source": "remote-work-policy"
+  },
+  {
+    "id": 24,
+    "domain": "cross_domain",
+    "question": "What is the maximum gift value employees can accept from vendors?",
+    "expected_answer": "Employees may accept nominal gifts valued at $50 or less. Gifts exceeding $50 must be reported and may need to be returned.",
+    "expected_source": "code-of-conduct"
+  },
+  {
+    "id": 25,
+    "domain": "cross_domain",
+    "question": "What AI tools are approved for use at Acme Corp?",
+    "expected_answer": "Currently approved AI tools are GitHub Copilot (engineering, enterprise license), Google Gemini (Google Workspace enterprise tier), and custom internal AI assistants via the Acme AI Platform.",
+    "expected_source": "acceptable-use-policy"
+  }
+]
