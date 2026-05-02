@@ -48,12 +48,5 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to Render
-        if: env.RENDER_DEPLOY_HOOK_URL != ''
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: |
-          curl -X POST "$RENDER_DEPLOY_HOOK_URL"
-          echo "Deployment triggered on Render"
+      - name: Notify deployment
+        run: echo "✅ Tests passed — DigitalOcean App Platform auto-deploys on push to main"
