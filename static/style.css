@@ -65,6 +65,7 @@ header .subtitle {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    scroll-behavior: smooth;
 }
 
 .message {
@@ -317,17 +318,99 @@ footer a {
     margin: 0.5rem 0 0.25rem;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-    .message {
-        max-width: 95%;
-    }
-
-    header h1 {
-        font-size: 1.25rem;
-    }
-
-    .input-container {
-        padding: 0.75rem 1rem;
-    }
+/* Skeleton Loader */
+.skeleton-line {
+    height: 12px;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+    margin-bottom: 10px;
 }
+
+.skeleton-line:last-child {
+    width: 65%;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.status-text {
+    font-size: 0.8125rem;
+    color: var(--text-light);
+    margin-bottom: 12px;
+    font-style: italic;
+}
+
+/* Suggested Chips */
+.suggested-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.suggested-chip {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    font-size: 0.8125rem;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.suggested-chip:hover {
+    background: var(--bot-bg);
+    border-color: var(--primary);
+}
+
+/* Action Buttons */
+.msg-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.icon-btn, .retry-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--text-light);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover, .retry-btn:hover {
+    background: #f1f5f9;
+    color: var(--text);
+}
+
+.retry-btn {
+    color: var(--error);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.retry-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+    .message { max-width: 95%; }
+    .message-content { font-size: 1rem; padding: 0.75rem 1rem; }
+    header h1 { font-size: 1.25rem; }
+    .input-container { padding: 0.75rem; }
+    .input-container input, .input-container button { padding: 0.6rem 1rem; }
+}
+

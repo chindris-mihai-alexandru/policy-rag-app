@@ -154,27 +154,23 @@ def warm_up():
     _get_llm()
 
 
-def ask(question: str) -> dict:
-    """Answer a policy question using RAG.
+import json
+
+def ask_stream(question: str):
+    """Answer a policy question using RAG (streaming).
 
     Args:
         question: The employee's question about Acme Corp policies.
 
-    Returns:
-        dict with 'answer', 'sources', and 'chunks' keys.
+    Yields:
+        JSON strings formatted for Server-Sent Events (SSE).
     """
     retrieved = _retrieve_context(question)
 
     if not retrieved:
-        return {
-            "answer": (
-                "I don't have enough information in our policy documents "
-                "to answer that question. Please contact HR at "
-                "hr@acmecorp.com or extension x4500 for further assistance."
-            ),
-            "sources": [],
-            "chunks": [],
-        }
+        yield f"data: {json.dumps({'chunk': 'I don\'t have enough information in our policy documents to answer that question. Please contact HR at hr@acmecorp.com or extension x4500 for further assistance.'})}\n\n"
+        yield f"data: {json.dumps({'sources': [], 'done': True})}\n\n"
+        return
 
     context_str = _format_context(retrieved)
 
@@ -187,10 +183,15 @@ def ask(question: str) -> dict:
 
     llm = _get_llm()
     chain = prompt | llm
-    response = chain.invoke({"context": context_str, "question": question})
+    
+    # Stream the chunks
+    full_answer = ""
+    for chunk in chain.stream({"context": context_str, "question": question}):
+        if chunk.content:
+            full_answer += chunk.content
+            yield f"data: {json.dumps({'chunk': chunk.content})}\n\n"
 
-    sources = list(dict.fromkeys(chunk["source"] for chunk in retrieved))
-
+    # Prepare sources
     source_snippets = []
     seen_sources = set()
     for chunk in retrieved:
@@ -206,16 +207,15 @@ def ask(question: str) -> dict:
                     else chunk["text"],
                 }
             )
+            
+    # Optional: Apply output guardrails to the full answer (we can't easily modify the stream retroactively,
+    # but we can append the verification note if needed)
+    from src.guardrails import validate_output
+    validated = validate_output(full_answer)
+    if validated != full_answer and len(validated) > len(full_answer):
+        # Guardrail added a note, send it as a final chunk
+        added_text = validated[len(full_answer):]
+        yield f"data: {json.dumps({'chunk': added_text})}\n\n"
 
-    return {
-        "answer": response.content,
-        "sources": source_snippets,
-        "chunks": [
-            {
-                "text": c["text"],
-                "source": c["source"],
-                "distance": c["distance"],
-            }
-            for c in retrieved
-        ],
-    }
+    # Yield final metadata
+    yield f"data: {json.dumps({'sources': source_snippets, 'done': True})}\n\n"

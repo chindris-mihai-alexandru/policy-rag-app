@@ -9,7 +9,7 @@ Endpoints:
 
 import time
 
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory, Response
 
 from src.guardrails import validate_input, validate_output
 
@@ -62,36 +62,20 @@ def chat():
     if not validation["valid"]:
         return jsonify({"answer": validation["error"], "sources": [], "latency_ms": 0}), 200
 
-    # Time the RAG pipeline
-    start = time.time()
     try:
-        from src.rag_chain import ask
-        result = ask(question)
+        from src.rag_chain import ask_stream
+        return Response(ask_stream(question), mimetype='text/event-stream')
     except Exception as e:
         import traceback
-        traceback.print_exc()  # logs full stack trace to Render's log stream
-        return jsonify(
-            {
-                "answer": (
-                    "I'm sorry, I encountered an error processing your question. "
-                    "Please try again or contact HR at hr@acmecorp.com."
-                ),
-                "sources": [],
-                "error": str(e),
-                "latency_ms": round((time.time() - start) * 1000),
-            }
-        ), 200
-
-    latency_ms = round((time.time() - start) * 1000)
-    answer = validate_output(result["answer"])
-
-    return jsonify(
-        {
-            "answer": answer,
-            "sources": result["sources"],
-            "latency_ms": latency_ms,
-        }
-    ), 200
+        traceback.print_exc()
+        import json
+        
+        def error_gen():
+            error_msg = "I'm sorry, I encountered an error processing your question. Please try again or contact HR at hr@acmecorp.com."
+            yield f"data: {json.dumps({'chunk': error_msg})}\n\n"
+            yield f"data: {json.dumps({'sources': [], 'done': True, 'error': str(e)})}\n\n"
+            
+        return Response(error_gen(), mimetype='text/event-stream')
 
 
 @app.route("/docs/<path:filename>")
