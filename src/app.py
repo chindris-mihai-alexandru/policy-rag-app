@@ -28,8 +28,11 @@ from src.config import OPENROUTER_API_KEY
 def _startup():
     from src.ingest import ingest_documents
     from src.rag_chain import warm_up
-    ingest_documents()
+    # force=False → skips ingest if build-time already populated the DB
+    result = ingest_documents(force=False)
+    print(f"[startup] ingest: {result.get('status')} — {result.get('message')}")
     warm_up()
+    print("[startup] warm-up complete")
 
 if OPENROUTER_API_KEY:
     threading.Thread(target=_startup, daemon=True).start()

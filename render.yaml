@@ -3,7 +3,7 @@ services:
     name: policy-rag-app
     runtime: python
     buildCommand: pip install -r requirements.txt && python -c "from src.config import FASTEMBED_CACHE_DIR; from langchain_community.embeddings import FastEmbedEmbeddings; FastEmbedEmbeddings(model_name='BAAI/bge-small-en-v1.5', cache_dir=FASTEMBED_CACHE_DIR).embed_query('warmup'); print('Model cached at', FASTEMBED_CACHE_DIR)" && python -c "from src.ingest import ingest_documents; r=ingest_documents(force=True); print(r)"
-    startCommand: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 30 --workers 1 --threads 2
+    startCommand: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 120 --graceful-timeout 30 --workers 1 --threads 2 --log-level info
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.9"
