@@ -10,6 +10,7 @@ from pathlib import Path
 
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.embeddings import FastEmbedEmbeddings
+from src.config import FASTEMBED_CACHE_DIR
 from langchain_text_splitters import (
     MarkdownHeaderTextSplitter,
     RecursiveCharacterTextSplitter,
@@ -27,7 +28,7 @@ from src.config import (
 
 def _get_embeddings() -> FastEmbedEmbeddings:
     """Return the FastEmbed embedding model (ONNX-based, no torch)."""
-    return FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
+    return FastEmbedEmbeddings(model_name=EMBEDDING_MODEL, cache_dir=FASTEMBED_CACHE_DIR)
 
 
 def _get_chroma_client():

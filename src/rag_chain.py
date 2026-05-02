@@ -13,6 +13,7 @@ from src.config import (
     CHROMA_COLLECTION,
     CHROMA_PERSIST_DIR,
     EMBEDDING_MODEL,
+    FASTEMBED_CACHE_DIR,
     OPENROUTER_API_KEY,
     OPENROUTER_BASE_URL,
     OPENROUTER_MODEL,
@@ -65,7 +66,7 @@ def _get_embeddings() -> FastEmbedEmbeddings:
     """Return the FastEmbed embedding model (singleton, ONNX-based, no torch)."""
     global _embeddings
     if _embeddings is None:
-        _embeddings = FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
+        _embeddings = FastEmbedEmbeddings(model_name=EMBEDDING_MODEL, cache_dir=FASTEMBED_CACHE_DIR)
     return _embeddings
 
 

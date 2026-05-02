@@ -39,3 +39,5 @@ evaluation/eval_results.json
 # Distribution
 *.tar.gz
 *.whl
+models_cache/
+chroma_db/
