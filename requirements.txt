@@ -1,0 +1,21 @@
+# Web framework
+flask>=3.1,<4
+gunicorn>=23.0,<24
+
+# LangChain ecosystem
+langchain>=0.3,<0.4
+langchain-community>=0.3,<0.4
+langchain-groq>=0.2,<0.3
+langchain-huggingface>=0.1,<0.2
+
+# Vector store
+chromadb>=0.6,<1.0
+
+# Embeddings
+sentence-transformers>=3.0,<4
+
+# Utilities
+python-dotenv>=1.0,<2
+
+# Testing
+pytest>=8.0,<9
