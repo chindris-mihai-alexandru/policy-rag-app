@@ -60,7 +60,11 @@ def chat():
     # Validate input
     validation = validate_input(question)
     if not validation["valid"]:
-        return jsonify({"answer": validation["error"], "sources": [], "latency_ms": 0}), 200
+        def validation_error_gen():
+            import json
+            yield f"data: {json.dumps({'chunk': validation['error']})}\n\n"
+            yield f"data: {json.dumps({'sources': [], 'done': True})}\n\n"
+        return Response(validation_error_gen(), mimetype='text/event-stream')
 
     try:
         from src.rag_chain import ask_stream

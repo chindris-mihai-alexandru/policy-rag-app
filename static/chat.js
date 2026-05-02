@@ -12,15 +12,20 @@ questionInput.addEventListener('keydown', function(e) {
     }
 });
 
+let isProcessing = false;
+
 function useSuggested(question) {
+    if (isProcessing) return;
     questionInput.value = question;
     sendQuestion();
 }
 
 async function sendQuestion(retryQuestion = null) {
+    if (isProcessing) return;
     const question = retryQuestion || questionInput.value.trim();
     if (!question) return;
 
+    isProcessing = true;
     // Disable input while processing
     questionInput.disabled = true;
     sendBtn.disabled = true;
@@ -96,6 +101,7 @@ async function sendQuestion(retryQuestion = null) {
         appendError(msgDiv, "Network connection failed.", question);
         console.error('Chat error:', error);
     } finally {
+        isProcessing = false;
         questionInput.disabled = false;
         sendBtn.disabled = false;
         questionInput.focus();

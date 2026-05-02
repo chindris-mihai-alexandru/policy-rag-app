@@ -156,57 +156,61 @@ def ask_stream(question: str):
     Yields:
         JSON strings formatted for Server-Sent Events (SSE).
     """
-    retrieved = _retrieve_context(question)
+    try:
+        retrieved = _retrieve_context(question)
 
-    if not retrieved:
-        yield f"data: {json.dumps({'chunk': 'I don\'t have enough information in our policy documents to answer that question. Please contact HR at hr@acmecorp.com or extension x4500 for further assistance.'})}\n\n"
-        yield f"data: {json.dumps({'sources': [], 'done': True})}\n\n"
-        return
+        if not retrieved:
+            yield f"data: {json.dumps({'chunk': 'I don\'t have enough information in our policy documents to answer that question. Please contact HR at hr@acmecorp.com or extension x4500 for further assistance.'})}\n\n"
+            yield f"data: {json.dumps({'sources': [], 'done': True})}\n\n"
+            return
 
-    context_str = _format_context(retrieved)
+        context_str = _format_context(retrieved)
 
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", SYSTEM_PROMPT),
-            ("human", HUMAN_PROMPT),
-        ]
-    )
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", SYSTEM_PROMPT),
+                ("human", HUMAN_PROMPT),
+            ]
+        )
 
-    llm = _get_llm()
-    chain = prompt | llm
-    
-    # Stream the chunks
-    full_answer = ""
-    for chunk in chain.stream({"context": context_str, "question": question}):
-        if chunk.content:
-            full_answer += chunk.content
-            yield f"data: {json.dumps({'chunk': chunk.content})}\n\n"
+        llm = _get_llm()
+        chain = prompt | llm
+        
+        # Stream the chunks
+        full_answer = ""
+        for chunk in chain.stream({"context": context_str, "question": question}):
+            if chunk.content:
+                full_answer += chunk.content
+                yield f"data: {json.dumps({'chunk': chunk.content})}\n\n"
 
-    # Prepare sources
-    source_snippets = []
-    seen_sources = set()
-    for chunk in retrieved:
-        src = chunk["source"]
-        if src not in seen_sources:
-            seen_sources.add(src)
-            source_snippets.append(
-                {
-                    "doc_id": src,
-                    "file": chunk["file"],
-                    "snippet": chunk["text"][:200] + "..."
-                    if len(chunk["text"]) > 200
-                    else chunk["text"],
-                }
-            )
-            
-    # Optional: Apply output guardrails to the full answer (we can't easily modify the stream retroactively,
-    # but we can append the verification note if needed)
-    from src.guardrails import validate_output
-    validated = validate_output(full_answer)
-    if validated != full_answer and len(validated) > len(full_answer):
-        # Guardrail added a note, send it as a final chunk
-        added_text = validated[len(full_answer):]
-        yield f"data: {json.dumps({'chunk': added_text})}\n\n"
+        # Prepare sources
+        source_snippets = []
+        seen_sources = set()
+        for chunk in retrieved:
+            src = chunk["source"]
+            if src not in seen_sources:
+                seen_sources.add(src)
+                source_snippets.append(
+                    {
+                        "doc_id": src,
+                        "file": chunk["file"],
+                        "snippet": chunk["text"][:200] + "..."
+                        if len(chunk["text"]) > 200
+                        else chunk["text"],
+                    }
+                )
+                
+        # Optional: Apply output guardrails to the full answer
+        from src.guardrails import validate_output
+        validated = validate_output(full_answer)
+        if validated != full_answer and len(validated) > len(full_answer):
+            # Guardrail added a note, send it as a final chunk
+            added_text = validated[len(full_answer):]
+            yield f"data: {json.dumps({'chunk': added_text})}\n\n"
 
-    # Yield final metadata
-    yield f"data: {json.dumps({'sources': source_snippets, 'done': True})}\n\n"
+        # Yield final metadata
+        yield f"data: {json.dumps({'sources': source_snippets, 'done': True})}\n\n"
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        yield f"data: {json.dumps({'error': str(e), 'done': True})}\n\n"
