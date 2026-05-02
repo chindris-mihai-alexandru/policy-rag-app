@@ -222,8 +222,8 @@ function formatAnswer(text) {
     let cleanText = text.replace(/【Source\s*\d+】/g, '');
     cleanText = cleanText.replace(/\[Source\s*\d+\]/g, '');
     
-    // Convert document citations like [pto-and-leave-policy] into styled inline badges
-    cleanText = cleanText.replace(/\[([a-zA-Z0-9_\-]+)\]/g, '<span class="inline-citation">📄 $1</span>');
+    // Convert document citations like [pto-and-leave-policy] into clickable styled inline badges
+    cleanText = cleanText.replace(/\[([a-zA-Z0-9_\-]+)\]/g, '<a class="inline-citation" href="/docs/$1.pdf" target="_blank" title="View $1">📄 $1</a>');
 
     if (typeof marked !== 'undefined') {
         return marked.parse(cleanText);
