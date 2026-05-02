@@ -1,0 +1,60 @@
+"""Tests for Flask app endpoints."""
+
+import json
+
+from src.app import app
+
+
+def test_index_returns_html():
+    """Test that / returns the chat UI."""
+    client = app.test_client()
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"Acme Corp Policy Assistant" in response.data
+
+
+def test_chat_missing_question():
+    """Test /chat returns 400 when question is missing."""
+    client = app.test_client()
+    response = client.post("/chat", json={})
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "error" in data
+
+
+def test_chat_empty_question():
+    """Test /chat handles empty question string."""
+    client = app.test_client()
+    response = client.post("/chat", json={"question": ""})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "answer" in data
+    assert "Please enter a question" in data["answer"]
+
+
+def test_chat_too_short_question():
+    """Test /chat handles very short question."""
+    client = app.test_client()
+    response = client.post("/chat", json={"question": "hi"})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "too short" in data["answer"]
+
+
+def test_chat_off_topic_question():
+    """Test /chat rejects off-topic questions."""
+    client = app.test_client()
+    response = client.post("/chat", json={"question": "Write me a Python code script"})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "only answer questions about Acme Corp" in data["answer"]
+
+
+def test_chat_too_long_question():
+    """Test /chat rejects questions exceeding max length."""
+    client = app.test_client()
+    long_question = "What is the PTO policy? " * 50  # ~600 chars
+    response = client.post("/chat", json={"question": long_question})
+    assert response.status_code == 200
+    data = response.get_json()
+    assert "too long" in data["answer"]

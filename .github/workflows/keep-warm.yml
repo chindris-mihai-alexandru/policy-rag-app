@@ -1,0 +1,20 @@
+name: Keep Render App Warm
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        env:
+          APP_HEALTH_URL: ${{ secrets.APP_HEALTH_URL }}
+        run: |
+          if [ -n "$APP_HEALTH_URL" ]; then
+            curl -fsS --max-time 30 "$APP_HEALTH_URL" >/dev/null || true
+          else
+            echo "APP_HEALTH_URL not set, skipping"
+          fi

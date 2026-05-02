@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acme Corp Policy Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>🏢 Acme Corp Policy Assistant</h1>
+            <p class="subtitle">Ask questions about company policies and procedures</p>
+        </header>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot-message">
+                <div class="message-content">
+                    <p>👋 Welcome! I'm the Acme Corp Policy Assistant. I can answer questions about our company policies including:</p>
+                    <ul>
+                        <li><strong>PTO & Leave</strong> — vacation, sick days, parental leave, FMLA</li>
+                        <li><strong>Remote Work</strong> — eligibility, equipment, expectations</li>
+                        <li><strong>Expenses</strong> — travel, meals, reimbursement process</li>
+                        <li><strong>Security</strong> — passwords, devices, data classification</li>
+                        <li><strong>Benefits</strong> — health insurance, 401(k), professional development</li>
+                        <li><strong>Holidays</strong> — company holidays, floating holidays</li>
+                    </ul>
+                    <p>How can I help you today?</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <form id="chatForm" onsubmit="return false;">
+                <input
+                    type="text"
+                    id="questionInput"
+                    placeholder="Ask a question about Acme Corp policies..."
+                    autocomplete="off"
+                    maxlength="500"
+                >
+                <button type="submit" id="sendBtn" onclick="sendQuestion()">
+                    Send
+                </button>
+            </form>
+        </div>
+
+        <footer>
+            <p>Acme Corp Policy Assistant — Answers are based on official policy documents. For questions not covered, contact <a href="mailto:hr@acmecorp.com">hr@acmecorp.com</a>.</p>
+        </footer>
+    </div>
+
+    <script src="/static/chat.js"></script>
+</body>
+</html>
