@@ -217,10 +217,18 @@ function createSourcesHtml(sources) {
 
 function formatAnswer(text) {
     if (!text) return '<p>No response received.</p>';
+    
+    // Clean up any stray "Source X" brackets the LLM might hallucinate
+    let cleanText = text.replace(/【Source\s*\d+】/g, '');
+    cleanText = cleanText.replace(/\[Source\s*\d+\]/g, '');
+    
+    // Convert document citations like [pto-and-leave-policy] into styled inline badges
+    cleanText = cleanText.replace(/\[([a-zA-Z0-9_\-]+)\]/g, '<span class="inline-citation">📄 $1</span>');
+
     if (typeof marked !== 'undefined') {
-        return marked.parse(text);
+        return marked.parse(cleanText);
     }
-    return '<p>' + escapeHtml(text).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+    return '<p>' + escapeHtml(cleanText).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
 }
 
 function escapeHtml(text) {

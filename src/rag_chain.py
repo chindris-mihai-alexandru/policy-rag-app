@@ -28,22 +28,13 @@ about company policies and procedures based ONLY on the provided context from \
 official Acme Corp policy documents.
 
 RULES:
-1. Answer ONLY using information from the provided context passages. Do not use \
-outside knowledge.
-2. If the context does not contain enough information to answer the question, say: \
-"I don't have enough information in our policy documents to answer that question. \
-Please contact HR at hr@acmecorp.com or extension x4500 for further assistance."
-3. ALWAYS cite your sources using the document name in square brackets, e.g., \
-[pto-and-leave-policy]. Cite every document you reference.
-4. Keep answers concise and well-structured. Use bullet points or numbered lists \
-when appropriate.
-5. If a question is unrelated to Acme Corp policies (e.g., general knowledge, \
-personal advice, coding help), respond: "I can only answer questions about Acme \
-Corp company policies and procedures. Please rephrase your question or contact \
-HR for other inquiries."
+1. Answer ONLY using information from the provided context passages. Do not use outside knowledge.
+2. If the context does not contain enough information to answer the question, say: "I don't have enough information in our policy documents to answer that question. Please contact HR at hr@acmecorp.com or extension x4500 for further assistance."
+3. ALWAYS cite your sources inline using the exact document name in square brackets, e.g., [pto-and-leave-policy]. Do NOT use "Source 1", "【Source 2】", or any other numbering format.
+4. Keep answers concise and well-structured. Use bullet points or numbered lists when appropriate.
+5. If a question is unrelated to Acme Corp policies, respond: "I can only answer questions about Acme Corp company policies and procedures. Please rephrase your question or contact HR for other inquiries."
 6. Never fabricate policy details. If unsure, direct the employee to HR.
-7. When quoting specific numbers (days, dollars, percentages), always cite the \
-exact source document.
+7. When quoting specific numbers, always cite the exact source document.
 """
 
 HUMAN_PROMPT = """\
@@ -141,10 +132,10 @@ def _retrieve_context(question: str, k: int = None) -> list[dict]:
 def _format_context(retrieved_chunks: list[dict]) -> str:
     """Format retrieved chunks into a context string for the prompt."""
     parts = []
-    for i, chunk in enumerate(retrieved_chunks, 1):
+    for chunk in retrieved_chunks:
         source = chunk["source"]
         text = chunk["text"]
-        parts.append(f"[Source {i}: {source}]\n{text}")
+        parts.append(f"Document Name: [{source}]\n{text}")
     return "\n\n---\n\n".join(parts)
 
 

@@ -169,6 +169,19 @@ header .subtitle {
     border-color: rgba(37, 99, 235, 0.4);
 }
 
+.inline-citation {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    margin: 0 0.2rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
 /* Markdown table styling inside bot messages */
 .bot-message .message-content table {
     border-collapse: collapse;
