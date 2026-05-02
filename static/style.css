@@ -1,15 +1,17 @@
 /* Acme Corp Policy Assistant — Styles */
 
 :root {
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
+    /* Quantic School inspired colors */
+    --primary: #0F204B;       /* Deep Navy */
+    --primary-dark: #0A1533;  /* Darker Navy */
+    --accent: #D4AF37;        /* Gold/Champagne */
     --bg: #f8fafc;
     --surface: #ffffff;
     --text: #1e293b;
     --text-light: #64748b;
     --border: #e2e8f0;
     --bot-bg: #f1f5f9;
-    --user-bg: #2563eb;
+    --user-bg: #0F204B;
     --user-text: #ffffff;
     --success: #10b981;
     --error: #ef4444;
@@ -32,7 +34,7 @@ body {
 
 .app-container {
     width: 100%;
-    max-width: 800px;
+    /* max-width removed to make UI full-width */
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -42,19 +44,20 @@ body {
 
 header {
     padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--accent); /* Quantic Gold accent */
     text-align: center;
+    background-color: var(--primary); /* Deep Navy background for header */
 }
 
 header h1 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--text);
+    color: var(--surface); /* White text on navy background */
 }
 
 header .subtitle {
     font-size: 0.875rem;
-    color: var(--text-light);
+    color: rgba(255, 255, 255, 0.8); /* Light text on navy background */
     margin-top: 0.25rem;
 }
 
