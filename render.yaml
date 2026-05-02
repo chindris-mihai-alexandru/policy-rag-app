@@ -3,7 +3,7 @@ services:
     name: policy-rag-app
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 30 --workers 1 --threads 2 --preload
+    startCommand: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 30 --workers 1 --threads 2
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.9"

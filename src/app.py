@@ -12,8 +12,6 @@ import time
 from flask import Flask, jsonify, render_template, request
 
 from src.guardrails import validate_input, validate_output
-from src.ingest import ingest_documents
-from src.rag_chain import warm_up
 
 app = Flask(
     __name__,
@@ -21,12 +19,20 @@ app = Flask(
     static_folder="../static",
 )
 
-# Eager initialisation: ingest corpus and warm up models at worker boot.
-# Guarded by API key presence so CI import checks don't fail.
+# Background startup: ingest corpus and warm up models in a thread so the
+# port binds immediately and Render health checks pass. The first /chat
+# request will block briefly if init isn't done yet.
+import threading
 from src.config import OPENROUTER_API_KEY
-if OPENROUTER_API_KEY:
+
+def _startup():
+    from src.ingest import ingest_documents
+    from src.rag_chain import warm_up
     ingest_documents()
     warm_up()
+
+if OPENROUTER_API_KEY:
+    threading.Thread(target=_startup, daemon=True).start()
 
 
 @app.route("/")
