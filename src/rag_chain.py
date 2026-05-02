@@ -89,9 +89,16 @@ def _get_llm() -> ChatOpenAI:
 
 
 def _get_chroma_collection():
-    """Return a ChromaDB collection handle."""
+    """Return a ChromaDB collection handle, triggering ingest if missing."""
     import chromadb
     client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
+    existing = [c.name for c in client.list_collections()]
+    if CHROMA_COLLECTION not in existing:
+        # Build-time DB didn't persist (Render ephemeral FS) — ingest on demand
+        print(f"[rag_chain] collection '{CHROMA_COLLECTION}' not found — triggering ingest...")
+        from src.ingest import ingest_documents
+        result = ingest_documents(force=True)
+        print(f"[rag_chain] on-demand ingest: {result}")
     return client.get_collection(CHROMA_COLLECTION)
 
 

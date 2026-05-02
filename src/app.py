@@ -68,6 +68,8 @@ def chat():
         from src.rag_chain import ask
         result = ask(question)
     except Exception as e:
+        import traceback
+        traceback.print_exc()  # logs full stack trace to Render's log stream
         return jsonify(
             {
                 "answer": (
