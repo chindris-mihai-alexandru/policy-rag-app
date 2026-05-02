@@ -2,7 +2,7 @@ services:
   - type: web
     name: policy-rag-app
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python -c "from langchain_community.embeddings import FastEmbedEmbeddings; FastEmbedEmbeddings(model_name='BAAI/bge-small-en-v1.5').embed_query('warmup')" && python -c "from src.ingest import ingest_documents; ingest_documents()"
     startCommand: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 300 --graceful-timeout 30 --workers 1 --threads 2
     envVars:
       - key: PYTHON_VERSION
