@@ -12,24 +12,25 @@
 
 ### 1.2 Embedding Model
 
-**Decision**: `sentence-transformers/all-MiniLM-L6-v2` (local, free)
+**Decision**: `BAAI/bge-small-en-v1.5` via [FastEmbed](https://github.com/qdrant/fastembed) (local, free)
 
-**Why**: This model is lightweight (80MB), runs locally without API keys, produces 384-dimensional embeddings, and has strong performance on semantic similarity benchmarks. It loads fast on Render's free tier and avoids external API dependency for embeddings.
+**Why**: FastEmbed is a lightweight, ONNX-optimized embedding library purpose-built for production inference. `bge-small-en-v1.5` (133MB) produces 384-dimensional embeddings and consistently outperforms MiniLM-L6 on MTEB retrieval benchmarks while remaining fast enough for build-time ingestion on DigitalOcean. It runs entirely locally — no API key required — and the model files are cached to `models_cache/` during the DO build phase to avoid re-downloading at startup.
 
 **Alternatives considered**:
-- Cohere Embed v3 (free tier): Better quality but adds API dependency and rate limits
-- all-mpnet-base-v2: Higher quality but 2x model size, slower on free tier
+- `all-MiniLM-L6-v2` (sentence-transformers): Slightly smaller but lower retrieval accuracy on MTEB; also requires `torch` which is heavier than the FastEmbed ONNX stack
+- Cohere Embed v3: Better quality but adds API dependency and rate limits
+- OpenAI `text-embedding-3-small`: High quality but adds per-token cost and external API dependency
 
 ### 1.3 Chunking Strategy
 
-**Decision**: Two-pass chunking — Markdown header splitting first, then recursive character splitting (1000 chars, 200 overlap).
+**Decision**: Recursive character splitting (1000 chars, 200 overlap) applied to PDF-extracted text.
 
-**Why**: Policy documents have natural heading structure. Splitting by headers preserves semantic coherence of sections (e.g., "Section 4.1 Air Travel" stays together). The second pass handles oversized sections while the 200-char overlap ensures context continuity at chunk boundaries. This produced 267 chunks from 10 documents.
+**Why**: The corpus is PDF-only (11 files). `pypdf` extracts plain text, so Markdown header splitting is not applicable. `RecursiveCharacterTextSplitter` with 1000-char chunks and 200-char overlap balances retrieval precision (chunks small enough to be specific) with context continuity (overlap prevents losing cross-sentence context at boundaries). The 200-char overlap ensures that key facts near a chunk boundary appear in both adjacent chunks.
 
 **Alternatives considered**:
-- Token-based splitting only: Loses heading context and may split mid-section
-- Smaller chunks (500 chars): More chunks = noisier retrieval results
-- Larger chunks (2000 chars): Risk exceeding LLM context with 5 retrieved chunks
+- Smaller chunks (500 chars): More granular but noisier retrieval; increases chunk count and retrieval latency
+- Larger chunks (2000 chars): Risk saturating LLM context when 5 chunks are concatenated into the prompt
+- Semantic chunking: More accurate but requires a heavier NLP pipeline; unnecessary for short, structured policy documents
 
 ### 1.4 Vector Store
 
@@ -43,14 +44,14 @@
 
 ### 1.5 LLM
 
-**Decision**: Groq `llama-3.3-70b-versatile` (free tier)
+**Decision**: OpenRouter `openai/gpt-oss-20b:free`
 
-**Why**: Groq provides extremely fast inference (~150 tokens/sec) on the free tier. The 70B parameter Llama 3.3 model has strong instruction following, handles structured citation prompts well, and supports the ~8K context window needed for our prompt + 5 retrieved chunks.
+**Why**: OpenRouter provides a unified API gateway over dozens of hosted models with a single API key. The `gpt-oss-20b:free` model (GPT-4o Mini class) has strong instruction-following, reliably formats bracket citations, and is available on the free tier with no per-token cost. Routing through OpenRouter decouples the app from any single provider — swapping models is a single `OPENROUTER_MODEL` env var change without code changes.
 
 **Alternatives considered**:
-- OpenRouter free models: Unreliable availability, rate limit changes
-- Local Ollama: Not feasible on Render free tier (insufficient RAM)
-- Groq Llama 4 Scout: Newer but less tested for instruction-following RAG tasks
+- Groq `llama-3.3-70b-versatile`: Very fast but Groq's free tier has strict rate limits that caused failures during automated 25-question evaluation runs
+- Local Ollama: Not feasible on DigitalOcean basic-xxs (insufficient RAM for 7B+ models)
+- OpenRouter `google/gemini-flash-1.5`: Good quality but inconsistent citation bracket formatting in early testing
 
 ### 1.6 Retrieval Strategy
 
@@ -85,9 +86,11 @@
 
 ### 1.10 Deployment
 
-**Decision**: Render free tier with gunicorn, following the same pattern as the malware-detection-ml project.
+**Decision**: DigitalOcean App Platform (basic-xxs) with Gunicorn.
 
-**Why**: Proven deployment pattern, zero cost, easy CI/CD integration. The keep-warm cron job prevents the Render free tier from spinning down.
+**Why**: DigitalOcean App Platform offers a persistent build layer (no re-ingestion cold-start penalty), a reliable always-on runtime, and was fully covered by the $200 Quantic student credit. The build command pre-warms the FastEmbed model and ingests all PDFs into ChromaDB once, so runtime startup is fast. Auto-deploy from GitHub `main` via the DO GitHub App integration provides seamless CI/CD.
+
+**Migration from Render**: The app was initially deployed on Render free tier but encountered OOM crashes during runtime ChromaDB ingestion (free tier limit ~512MB). DigitalOcean's build phase has more headroom, and the persistent disk avoids re-ingesting on every restart. The Render service has been deleted.
 
 ---
 
@@ -144,12 +147,12 @@ Each question has an expected answer and expected source document for automated 
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| LLM | Groq llama-3.3-70b-versatile | Free, fast, strong instruction following |
-| Embeddings | all-MiniLM-L6-v2 | Free, local, lightweight, good quality |
-| Vector Store | ChromaDB | Free, persistent, LangChain native |
+| LLM | OpenRouter `openai/gpt-oss-20b:free` | Free, provider-agnostic, reliable citation formatting |
+| Embeddings | FastEmbed `BAAI/bge-small-en-v1.5` | Free, local ONNX-optimized, strong MTEB retrieval scores |
+| Vector Store | ChromaDB v0.6.3 | Free, persistent, LangChain native |
 | Orchestration | LangChain | Required by spec; handles retrieval chain |
-| Web Framework | Flask | Lightweight, meets endpoint requirements |
-| Chunking | Markdown headers + recursive (1000/200) | Preserves document structure |
+| Web Framework | Flask (SSE streaming) | Lightweight, real-time token streaming via Server-Sent Events |
+| Chunking | Recursive character (1000/200) | Good precision-to-noise balance for PDF corpus |
 | Retrieval | Top-k=5 similarity | Good coverage-to-noise balance |
-| Deployment | Render free tier + gunicorn | Proven pattern, zero cost |
-| CI/CD | GitHub Actions | Build + test + deploy on push |
+| Deployment | DigitalOcean App Platform + Gunicorn | Persistent build layer, always-on, $200 student credit |
+| CI/CD | GitHub Actions + DO GitHub App | Tests on push; auto-deploy to DO on merge to main |
