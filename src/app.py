@@ -22,9 +22,11 @@ app = Flask(
 )
 
 # Eager initialisation: ingest corpus and warm up models at worker boot.
-# This prevents first-request timeout on Render free tier.
-ingest_documents()
-warm_up()
+# Guarded by API key presence so CI import checks don't fail.
+from src.config import OPENROUTER_API_KEY
+if OPENROUTER_API_KEY:
+    ingest_documents()
+    warm_up()
 
 
 @app.route("/")
