@@ -218,12 +218,17 @@ function createSourcesHtml(sources) {
 function formatAnswer(text) {
     if (!text) return '<p>No response received.</p>';
     
-    // Clean up any stray "Source X" brackets the LLM might hallucinate
-    let cleanText = text.replace(/【Source\s*\d+】/g, '');
-    cleanText = cleanText.replace(/\[Source\s*\d+\]/g, '');
+    // Clean up any stray "Source X" or "Source: X" the LLM might hallucinate
+    let cleanText = text.replace(/[\[【]\s*Source\s*:?\s*\d+\s*[\]】]/gi, '');
     
-    // Convert document citations like [pto-and-leave-policy] into clickable styled inline badges
-    cleanText = cleanText.replace(/\[([a-zA-Z0-9_\-]+)\]/g, '<a class="inline-citation" href="/docs/$1.pdf" target="_blank" title="View $1">📄 $1</a>');
+    // Convert document citations like [pto-and-leave-policy] or 【pto-and-leave-policy】 into clickable styled inline badges
+    // We match standard [] and full-width 【】 brackets. 
+    // We ensure the inside string is at least 4 chars and contains a dash or underscore to avoid matching generic words like [Note].
+    cleanText = cleanText.replace(/[\[【]([a-zA-Z0-9][a-zA-Z0-9_\-]{3,})[\]】]/g, (match, docId) => {
+        // If it's just a generic word without dashes/underscores, return it as is
+        if (!docId.includes('-') && !docId.includes('_')) return match;
+        return `<a class="inline-citation" href="/docs/${docId}.pdf" target="_blank" title="View ${docId}">📄 ${docId}</a>`;
+    });
 
     if (typeof marked !== 'undefined') {
         return marked.parse(cleanText);
