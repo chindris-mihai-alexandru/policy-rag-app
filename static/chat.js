@@ -52,6 +52,8 @@ async function sendQuestion(retryQuestion = null) {
         let fullText = '';
         let isFirstChunk = true;
         let buffer = '';
+        let activeSources = [];
+        let hasAppendedSources = false;
 
         while (true) {
             const { value, done } = await reader.read();
@@ -69,19 +71,29 @@ async function sendQuestion(retryQuestion = null) {
                     try {
                         const data = JSON.parse(dataStr);
                         
-                        if (isFirstChunk && data.chunk) {
+                        if (isFirstChunk && (data.chunk || data.type === 'sources' || data.sources)) {
                             removeSkeleton(msgDiv);
                             isFirstChunk = false;
                         }
 
+                        if (data.type === 'sources' || (data.sources && !data.done)) {
+                            activeSources = data.sources;
+                            if (!hasAppendedSources && activeSources.length > 0) {
+                                appendSources(msgDiv, activeSources);
+                                hasAppendedSources = true;
+                            }
+                        }
+
                         if (data.chunk) {
                             fullText += data.chunk;
-                            updateBotMessage(msgDiv, fullText);
+                            updateBotMessage(msgDiv, fullText, activeSources);
                         }
                         
-                        if (data.done) {
-                            if (data.sources && data.sources.length > 0) {
-                                appendSources(msgDiv, data.sources);
+                        if (data.type === 'done' || data.done) {
+                            if (data.sources && !hasAppendedSources && data.sources.length > 0) {
+                                activeSources = data.sources;
+                                appendSources(msgDiv, activeSources);
+                                hasAppendedSources = true;
                             }
                             if (data.error) {
                                 appendError(msgDiv, data.error, question);
@@ -154,7 +166,7 @@ function removeSkeleton(msgDiv) {
     contentDiv.innerHTML = '';
 }
 
-function updateBotMessage(msgDiv, text) {
+function updateBotMessage(msgDiv, text, activeSources = []) {
     let contentDiv = msgDiv.querySelector('.message-content');
     if (!contentDiv) {
         contentDiv = document.createElement('div');
@@ -166,7 +178,7 @@ function updateBotMessage(msgDiv, text) {
     const sourcesDiv = msgDiv.querySelector('.sources-section');
     const actionsDiv = msgDiv.querySelector('.msg-actions');
     
-    contentDiv.innerHTML = formatAnswer(text);
+    contentDiv.innerHTML = formatAnswer(text, activeSources);
     
     if (sourcesDiv) contentDiv.appendChild(sourcesDiv);
     if (actionsDiv) contentDiv.appendChild(actionsDiv);
@@ -221,20 +233,46 @@ function createSourcesHtml(sources) {
     return html;
 }
 
-function formatAnswer(text) {
+function formatAnswer(text, activeSources = []) {
     if (!text) return '<p>No response received.</p>';
+
+    let cleanText = text;
+
+    // 1. Clean up generic "Source X" or "Source: X" references
+    cleanText = cleanText.replace(/[\[【(]\s*Source\s*:?\s*\d+\s*[\]】)]/gi, '');
     
-    // Clean up any stray "Source X" or "Source: X" the LLM might hallucinate
-    let cleanText = text.replace(/[\[【]\s*Source\s*:?\s*\d+\s*[\]】]/gi, '');
-    
-    // Convert document citations like [pto-and-leave-policy] or 【pto-and-leave-policy】 into clickable styled inline badges
-    // We match standard [] and full-width 【】 brackets. 
-    // We ensure the inside string is at least 4 chars and contains a dash or underscore to avoid matching generic words like [Note].
-    cleanText = cleanText.replace(/[\[【]([a-zA-Z0-9][a-zA-Z0-9_\-]{3,})[\]】]/g, (match, docId) => {
-        // If it's just a generic word without dashes/underscores, return it as is
-        if (!docId.includes('-') && !docId.includes('_')) return match;
-        return `<a class="inline-citation" href="/docs/${docId}.pdf" target="_blank" title="View ${docId}">📄 ${docId}</a>`;
-    });
+    // 2. Dynamic Source Linking
+    // Link any known retrieved source even if the model uses brackets, spaces,
+    // underscores, normal hyphens, or Unicode/non-breaking hyphen variants.
+    if (activeSources && activeSources.length > 0) {
+        const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const separatorPattern = '[-_\\s\\u2010\\u2011\\u2012\\u2013\\u2014\\u2015\\u2212\\uFE58\\uFE63\\uFF0D]+';
+
+        const sourceMatchers = activeSources
+            .map(src => {
+                const docId = src.doc_id || (src.file || '').replace(/\.[^/.]+$/, '');
+                if (!docId) return null;
+
+                const file = src.file || `${docId}.pdf`;
+                const label = docId.toLowerCase();
+                const flexibleDocPattern = escapeRegex(docId).replace(/[-_]+/g, separatorPattern);
+
+                return {
+                    docId,
+                    file,
+                    label,
+                    regex: new RegExp(`(?:[\\[【(]\\s*)?(${flexibleDocPattern})(?:\\s*[\\]】)])?`, 'gi'),
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.docId.length - a.docId.length);
+
+        for (const source of sourceMatchers) {
+            cleanText = cleanText.replace(source.regex, () => {
+                return `<a class="inline-citation" href="/docs/${encodeURIComponent(source.file)}" target="_blank" title="View ${escapeHtml(source.docId)}">📄 ${escapeHtml(source.label)}</a>`;
+            });
+        }
+    }
 
     if (typeof marked !== 'undefined') {
         return marked.parse(cleanText);

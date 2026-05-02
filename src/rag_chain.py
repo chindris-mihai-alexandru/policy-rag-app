@@ -176,14 +176,7 @@ def ask_stream(question: str):
         llm = _get_llm()
         chain = prompt | llm
         
-        # Stream the chunks
-        full_answer = ""
-        for chunk in chain.stream({"context": context_str, "question": question}):
-            if chunk.content:
-                full_answer += chunk.content
-                yield f"data: {json.dumps({'chunk': chunk.content})}\n\n"
-
-        # Prepare sources
+        # Prepare sources IMMEDIATELY to send to the UI first
         source_snippets = []
         seen_sources = set()
         for chunk in retrieved:
@@ -199,7 +192,17 @@ def ask_stream(question: str):
                         else chunk["text"],
                     }
                 )
-                
+
+        # Yield sources FIRST so the UI can render chips and prep dynamic linking instantly
+        yield f"data: {json.dumps({'type': 'sources', 'sources': source_snippets})}\n\n"
+
+        # Stream the chunks
+        full_answer = ""
+        for chunk in chain.stream({"context": context_str, "question": question}):
+            if chunk.content:
+                full_answer += chunk.content
+                yield f"data: {json.dumps({'chunk': chunk.content})}\n\n"
+
         # Optional: Apply output guardrails to the full answer
         from src.guardrails import validate_output
         validated = validate_output(full_answer)
@@ -209,7 +212,7 @@ def ask_stream(question: str):
             yield f"data: {json.dumps({'chunk': added_text})}\n\n"
 
         # Yield final metadata
-        yield f"data: {json.dumps({'sources': source_snippets, 'done': True})}\n\n"
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
     except Exception as e:
         import traceback
         traceback.print_exc()
