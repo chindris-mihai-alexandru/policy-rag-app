@@ -22,14 +22,22 @@ def test_chat_missing_question():
     assert "error" in data
 
 
+def _extract_sse_data(response_data: bytes) -> dict:
+    """Helper to extract JSON data from the first SSE chunk."""
+    text = response_data.decode("utf-8")
+    for line in text.splitlines():
+        if line.startswith("data: "):
+            return json.loads(line[6:])
+    return {}
+
 def test_chat_empty_question():
     """Test /chat handles empty question string."""
     client = app.test_client()
     response = client.post("/chat", json={"question": ""})
     assert response.status_code == 200
-    data = response.get_json()
-    assert "answer" in data
-    assert "Please enter a question" in data["answer"]
+    data = _extract_sse_data(response.data)
+    assert "chunk" in data
+    assert "Please enter a question" in data["chunk"]
 
 
 def test_chat_too_short_question():
@@ -37,8 +45,9 @@ def test_chat_too_short_question():
     client = app.test_client()
     response = client.post("/chat", json={"question": "hi"})
     assert response.status_code == 200
-    data = response.get_json()
-    assert "too short" in data["answer"]
+    data = _extract_sse_data(response.data)
+    assert "chunk" in data
+    assert "too short" in data["chunk"]
 
 
 def test_chat_off_topic_question():
@@ -46,8 +55,9 @@ def test_chat_off_topic_question():
     client = app.test_client()
     response = client.post("/chat", json={"question": "Write me a Python code script"})
     assert response.status_code == 200
-    data = response.get_json()
-    assert "only answer questions about Acme Corp" in data["answer"]
+    data = _extract_sse_data(response.data)
+    assert "chunk" in data
+    assert "only answer questions about Acme Corp" in data["chunk"]
 
 
 def test_chat_too_long_question():
@@ -56,5 +66,6 @@ def test_chat_too_long_question():
     long_question = "What is the PTO policy? " * 50  # ~600 chars
     response = client.post("/chat", json={"question": long_question})
     assert response.status_code == 200
-    data = response.get_json()
-    assert "too long" in data["answer"]
+    data = _extract_sse_data(response.data)
+    assert "chunk" in data
+    assert "too long" in data["chunk"]
