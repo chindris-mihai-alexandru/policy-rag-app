@@ -4,7 +4,7 @@
 
 The Acme Corp Policy RAG application is deployed on Render:
 
-**URL**: *(To be updated after Render deployment)*
+**URL**: https://policy-rag-app-v2td.onrender.com
 
 ## Deployment Details
 
@@ -12,7 +12,7 @@ The Acme Corp Policy RAG application is deployed on Render:
 - **Runtime**: Python 3.12
 - **Server**: Gunicorn (1 worker, 2 threads)
 - **CI/CD**: GitHub Actions triggers deployment on push to main via webhook
-- **Keep-Warm**: GitHub Actions cron job pings /health every 10 minutes
+- **Keep-Warm**: GitHub Actions cron job pings /healthz every 10 minutes (APP_HEALTH_URL secret set)
 
 ## How to Deploy
 
