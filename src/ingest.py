@@ -122,8 +122,8 @@ def ingest_documents(force: bool = False) -> dict:
     corpus_hash = _compute_corpus_hash()
 
     # Check if collection already exists and is current
-    # NOTE: chromadb >=0.4 returns Collection objects, not strings — compare by .name
-    existing_collections = [c.name for c in client.list_collections()]
+    # chromadb v0.6.0: list_collections() returns collection names (strings) directly
+    existing_collections = list(client.list_collections())
     if CHROMA_COLLECTION in existing_collections and not force:
         collection = client.get_collection(CHROMA_COLLECTION)
         stored_meta = collection.metadata or {}
@@ -134,7 +134,7 @@ def ingest_documents(force: bool = False) -> dict:
                 "num_chunks": collection.count(),
             }
 
-    # Delete existing collection if present (existing_collections is already list of names)
+    # Delete existing collection if present
     if CHROMA_COLLECTION in existing_collections:
         client.delete_collection(CHROMA_COLLECTION)
 
