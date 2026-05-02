@@ -7,7 +7,7 @@ policy questions with citations.
 from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 
 from src.config import (
     CHROMA_COLLECTION,
@@ -57,19 +57,15 @@ Provide a helpful, accurate answer with citations to the source documents."""
 
 
 # Module-level singletons — loaded once at worker boot, not per-request
-_embeddings: HuggingFaceEmbeddings | None = None
+_embeddings: FastEmbedEmbeddings | None = None
 _llm: ChatOpenAI | None = None
 
 
-def _get_embeddings() -> HuggingFaceEmbeddings:
-    """Return the HuggingFace embedding model (singleton)."""
+def _get_embeddings() -> FastEmbedEmbeddings:
+    """Return the FastEmbed embedding model (singleton, ONNX-based, no torch)."""
     global _embeddings
     if _embeddings is None:
-        _embeddings = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL,
-            model_kwargs={"device": "cpu"},
-            encode_kwargs={"normalize_embeddings": True},
-        )
+        _embeddings = FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
     return _embeddings
 
 

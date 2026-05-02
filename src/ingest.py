@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 from langchain_text_splitters import (
     MarkdownHeaderTextSplitter,
     RecursiveCharacterTextSplitter,
@@ -25,13 +25,9 @@ from src.config import (
 )
 
 
-def _get_embeddings() -> HuggingFaceEmbeddings:
-    """Return the HuggingFace embedding model."""
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+def _get_embeddings() -> FastEmbedEmbeddings:
+    """Return the FastEmbed embedding model (ONNX-based, no torch)."""
+    return FastEmbedEmbeddings(model_name=EMBEDDING_MODEL)
 
 
 def _get_chroma_client():
