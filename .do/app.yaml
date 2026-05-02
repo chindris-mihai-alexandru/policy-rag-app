@@ -1,0 +1,25 @@
+name: policy-rag-app
+region: nyc
+services:
+  - name: policy-rag-app
+    github:
+      repo: chindris-mihai-alexandru/policy-rag-app
+      branch: main
+      deploy_on_push: true
+    build_command: pip install -r requirements.txt && python -c "from src.config import FASTEMBED_CACHE_DIR; from langchain_community.embeddings import FastEmbedEmbeddings; FastEmbedEmbeddings(model_name='BAAI/bge-small-en-v1.5', cache_dir=FASTEMBED_CACHE_DIR).embed_query('warmup'); print('Model cached')" && python -c "from src.ingest import ingest_documents; r=ingest_documents(force=True); print(r)"
+    run_command: gunicorn src.app:app --bind 0.0.0.0:$PORT --timeout 120 --graceful-timeout 30 --workers 1 --threads 2 --log-level info
+    environment_slug: python
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    http_port: 8080
+    health_check:
+      http_path: /healthz
+      initial_delay_seconds: 30
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: OPENROUTER_API_KEY
+        value: ""
+        type: SECRET
