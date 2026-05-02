@@ -77,6 +77,7 @@ def chat():
 
 
 @app.route("/health")
+@app.route("/healthz")
 def health():
     """Health check endpoint."""
     return jsonify({"status": "healthy", "service": "policy-rag-app"}), 200
