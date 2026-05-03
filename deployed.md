@@ -42,4 +42,4 @@ The Acme Corp Policy RAG application is deployed on DigitalOcean App Platform:
 
 ## Previous Deployment (Obsolete)
 
-The app was originally deployed on Render free tier (`https://policy-rag-app-v2td.onrender.com`) but was migrated to DigitalOcean due to free-tier memory limits (OOM during ChromaDB ingest at runtime) and lack of persistent disk. The Render service has been deleted. All Render-specific files (`render.yaml`, deploy hooks) are obsolete.
+The app was originally deployed on Render free tier but was migrated to DigitalOcean due to free-tier memory limits (OOM during ChromaDB ingest at runtime) and lack of persistent disk. The Render service has been deleted.
