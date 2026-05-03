@@ -59,17 +59,19 @@ This project was built with extensive AI assistance, as encouraged by the projec
 
 ---
 
-### 4. Gemini 3.1 Pro — Research, Web Grounding & Documentation Finalization
+### 4. Gemini 3.1 Pro — UI/UX Overhaul, Research & Documentation Finalization
 
-**Role**: Used in the final project phase for web-grounded research, documentation review, and cross-checking decisions against current best practices.
+**Role**: Used for the full UI/UX redesign, web-grounded research, documentation review, and cross-checking decisions against current best practices.
 
 **What worked well**:
+- **UI/UX redesign**: Drove the complete frontend overhaul — Quantic branding (maroon/gold color scheme), full-width responsive layout, skeleton loaders during retrieval, improved message bubbles, and the source citation badge styling. Produced clean, self-contained HTML/CSS/JS changes with minimal back-and-forth.
+- **Citation badge UI**: Helped finalize the visual design of the dynamic source badges — styling, hover states, and placement within the streamed response.
 - Excellent for web-grounded queries (e.g., confirming FastEmbed MTEB benchmark scores, DigitalOcean buildpack behavior, shields.io badge syntax).
 - 1M token context window was useful for pasting large file collections and asking "is anything inconsistent?".
 - Strong at identifying stale references across documentation (caught Groq/MiniLM/Render references still present in README and design doc).
 
 **What didn't work as well**:
-- Less precise on surgical code edits compared to Claude models — better suited for research and review than code generation.
+- Less precise on surgical code edits compared to Claude models outside of UI work.
 - Occasionally verbose in answers where a single sentence would suffice.
 
 ---
