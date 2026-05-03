@@ -13,9 +13,9 @@ DOCS_DIR = BASE_DIR / "docs"
 CHROMA_PERSIST_DIR = str(BASE_DIR / os.getenv("CHROMA_PERSIST_DIR", "chroma_db"))
 
 # Embedding model
-# FastEmbed model — ONNX-based, no PyTorch, fits Render 512MB free tier
+# FastEmbed model — ONNX-based, no PyTorch, lightweight for cloud hosting
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
-# Cache dir inside project so Render build artifacts persist to runtime
+# Cache dir inside project so build artifacts persist to runtime
 FASTEMBED_CACHE_DIR = str(BASE_DIR / "models_cache")
 
 # OpenRouter LLM (OpenAI-compatible API)

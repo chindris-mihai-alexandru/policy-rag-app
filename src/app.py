@@ -4,7 +4,7 @@ Endpoints:
     GET  /       — Chat UI
     POST /chat   — API endpoint for questions
     GET  /health — Health check
-    GET  /healthz — Health check (Render alias)
+    GET  /healthz — Health check (alias)
 """
 
 import time
@@ -20,7 +20,7 @@ app = Flask(
 )
 
 # Background startup: ingest corpus and warm up models in a thread so the
-# port binds immediately and Render health checks pass. The first /chat
+# port binds immediately and health checks pass. The first /chat
 # request will block briefly if init isn't done yet.
 import threading
 from src.config import OPENROUTER_API_KEY

@@ -1,4 +1,4 @@
-name: Keep Render App Warm
+name: Keep App Warm
 
 on:
   schedule:
