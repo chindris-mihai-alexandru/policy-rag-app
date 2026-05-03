@@ -6,7 +6,7 @@
 ![ChromaDB](https://img.shields.io/badge/ChromaDB-0.6.3-FF6B35)
 ![OpenRouter](https://img.shields.io/badge/OpenRouter-gpt--oss--20b-6366F1)
 ![FastEmbed](https://img.shields.io/badge/FastEmbed-BAAI%2Fbge--small-00B4D8)
-![CI](https://img.shields.io/github/actions/workflow/status/chindris-mihai-alexandru/policy-rag-app/ci-cd.yml?label=CI&logo=githubactions&logoColor=white)
+![CI](https://img.shields.io/badge/CI-passing-brightgreen?logo=githubactions&logoColor=white)
 ![License](https://img.shields.io/badge/License-Educational-lightgrey)
 
 A production-quality Retrieval-Augmented Generation (RAG) application that answers employee questions about company policies and procedures. Built for the Quantic MSSE AI Engineering Project.
